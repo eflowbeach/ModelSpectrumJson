@@ -50,9 +50,13 @@ qx.Class.define("modelspectrumjson.Application",
       -------------------------------------------------------------------------
       */
 
-      // Create a button
+      // Create HTML for flot
       var html = new qx.ui.embed.Html();
       html.setHtml('<div id="content"><div class="demo-container"><div id="placeholder" class="demo-placeholder"></div></div></div>');
+
+     html.addListener("appear", function(e) {
+        modelspectrumjson.Plot.getInstance();
+      });
 
       // Document is the application root
       var doc = this.getRoot();
@@ -61,9 +65,13 @@ qx.Class.define("modelspectrumjson.Application",
       doc.add(html, {
         edge : 0
       });
-      html.addListener("appear", function(e) {
-        modelspectrumjson.Plot.getInstance();
-      });
+
+
+      var button = new qx.ui.form.Button("Hello");
+      doc.add(button);
+           var button2 = new qx.ui.form.Button("Hello");
+            doc.add(button2);
+
     }
   }
 });

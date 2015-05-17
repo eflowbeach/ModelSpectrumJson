@@ -10,6 +10,7 @@
       <script language="javascript" type="text/javascript" src="resource/modelspectrumjson/js/flot/jquery.flot.js"></script>
       <script language="javascript" type="text/javascript" src="resource/modelspectrumjson/js/flot/jquery.flot.time.js"></script>
       <script language="javascript" type="text/javascript" src="resource/modelspectrumjson/js/flot/jquery.flot.navigate.js"></script>
+      <script language="javascript" type="text/javascript" src="resource/modelspectrumjson/js/flot/jquery.flot.axislabels.js"></script>
       <script language="javascript" type="text/javascript" src="resource/modelspectrumjson/js/d3.v3.min.js"></script>
       <script language="javascript" type="text/javascript" src="resource/modelspectrumjson/js/moment.js"></script>
 
