@@ -119,10 +119,11 @@ qx.Class.define("modelspectrumjson.Plot",
             var high = 20;
             var medium = 10;
             var low = 5;
-          }else if(field == "QPF"){
+          } else if (field == "QPF")
+          {
             var high = 0.5;
-                        var medium = 0.25;
-                        var low = 0.1;
+            var medium = 0.25;
+            var low = 0.1;
           } else
           {
             high = 4;
@@ -234,7 +235,7 @@ qx.Class.define("modelspectrumjson.Plot",
           {
             min : (field == "RH" || field == "PoP") ? 0 : null,
             max : (field == "RH" || field == "PoP") ? 100 : null,
-            axisLabel : field  + ', '+ results.units
+            axisLabel : field + ', ' + results.units
           },
           zoom : {
             interactive : true
@@ -245,7 +246,6 @@ qx.Class.define("modelspectrumjson.Plot",
           grid : {
             hoverable : true
           }
-
         });
       }
       $.ajax(
