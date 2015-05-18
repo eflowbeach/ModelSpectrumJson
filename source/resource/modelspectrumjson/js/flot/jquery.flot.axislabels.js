@@ -135,7 +135,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     }
 
     HtmlAxisLabel.prototype.calculateSize = function() {
-        var elem = $('<div class="axisLabels" style="position:absolute;">' +
+        var elem = $('<div class="axisLabels" style="position:absolute;font-weight: bold;">' +
                      this.opts.axisLabel + '</div>');
         this.plot.getPlaceholder().append(elem);
         // store height and width of label itself, for use in draw()
@@ -160,7 +160,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     HtmlAxisLabel.prototype.draw = function(box) {
         this.plot.getPlaceholder().find('#' + this.axisName + 'Label').remove();
         this.elem = $('<div id="' + this.axisName +
-                      'Label" " class="axisLabels" style="position:absolute;">'
+                      'Label" " class="axisLabels" style="position:absolute;font-weight: bold;">'
                       + this.opts.axisLabel + '</div>');
         this.plot.getPlaceholder().append(this.elem);
         if (this.position == 'top') {
@@ -262,7 +262,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         this.plot.getPlaceholder().find("." + this.axisName + "Label").remove();
         var offsets = this.calculateOffsets(box);
         this.elem = $('<div class="axisLabels ' + this.axisName +
-                      'Label" style="position:absolute; ' +
+                      'Label" style="position:absolute;font-weight: bold; ' +
                       this.transforms(offsets.degrees, offsets.x, offsets.y) +
                       '">' + this.opts.axisLabel + '</div>');
         this.plot.getPlaceholder().append(this.elem);

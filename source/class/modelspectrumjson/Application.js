@@ -49,6 +49,7 @@ qx.Class.define("modelspectrumjson.Application",
         Below is your actual application code...
       -------------------------------------------------------------------------
       */
+      var container = new qx.ui.container.Composite(new qx.ui.layout.VBox(5));
 
       // Create HTML for flot
       var html = new qx.ui.embed.Html();
@@ -56,18 +57,21 @@ qx.Class.define("modelspectrumjson.Application",
       html.addListener("appear", function(e) {
         modelspectrumjson.Plot.getInstance();
       });
+      var showLines = new qx.ui.form.ToggleButton("Show Lines");
+      showLines.addListener("changeValue", function(e){
+           modelspectrumjson.Plot.getInstance().setShowLines(e.getData());
+      });
 
-      // Document is the application root
-      var doc = this.getRoot();
+
+      container.add(html, {
+        flex : 1
+      });
+      container.add(showLines);
 
       // Add button to document at fixed coordinates
-      doc.add(html, {
+      this.getRoot().add(container, {
         edge : 0
       });
-      var button = new qx.ui.form.Button("Hello");
-      doc.add(button);
-      var button2 = new qx.ui.form.Button("Hello");
-      doc.add(button2);
     }
   }
 });
