@@ -11,6 +11,7 @@ qx.Class.define("modelspectrumjson.Plot",
   {
     dataClone : {
       init : {
+
       }
     },
     wfo :
@@ -25,12 +26,17 @@ qx.Class.define("modelspectrumjson.Plot",
     },
     field :
     {
-      init : "T",
+      init : "MaxT",
       apply : "requestData"
     },
     showLines :
     {
       init : false,
+      apply : "onDataReceived"
+    },
+    showClimate :
+    {
+      init : true,
       apply : "onDataReceived"
     }
   },
@@ -120,18 +126,15 @@ qx.Class.define("modelspectrumjson.Plot",
           var addMinutes = 0;
           if (typeof result.data[x / 1000] === "undefined")
           {
-            match = (x - (1000 * 3600 * result.gridLengthHours) / 2) / 1000;
+            //match = (x - (1000 * 3600 * result.gridLengthHours) / 2) / 1000;
+            match = (x / 1000) - ((3600 * result.gridLengthHours) / 2);
             addMinutes = 30;
           }
 
           // Construct Tooltip html
           var html = '';
-          html += "<table><tr><td><b>From:</b> </td><td>" + new moment(x).add(addMinutes, 'minutes').format("h A ddd, MMM D, YYYY ") + new moment.utc(x).add(addMinutes, 'minutes').format("(HH") + " UTC) </td></tr>";
-          html += "<tr><td><b>To:</b></td><td> " + new moment(x).add(result.gridLengthHours * 60 + addMinutes, 'minutes').format("h A ddd, MMM D, YYYY ") + new moment.utc(x).add(result.gridLengthHours * 60 + addMinutes, 'minutes').format("(HH") + " UTC) </td></tr>";
-
-          // html += "<tr><td><b>Units:</b></td><td> "+result.units+"</td></tr>";
-
-          //html+=  "<b>Units:</b> "+result.units +"<hr>";
+          html += "<table><tr><td><b>From:</b> </td><td>" + new moment(match * 1000).add(addMinutes, 'minutes').format("h A ddd, MMM D, YYYY ") + new moment.utc(x).add(addMinutes, 'minutes').format("(HH") + " UTC) </td></tr>";
+          html += "<tr><td><b>To:</b></td><td> " + new moment(match * 1000).add(result.gridLengthHours * 60 + addMinutes, 'minutes').format("h A ddd, MMM D, YYYY ") + new moment.utc(x).add(result.gridLengthHours * 60 + addMinutes, 'minutes').format("(HH") + " UTC) </td></tr>";
           html += "</table><hr>";
 
           // Forecasts
@@ -161,8 +164,6 @@ qx.Class.define("modelspectrumjson.Plot",
           models = models.filter(function(n) {
             return n != undefined
           });
-
-          //  debugger;
           html += "<tr><td style='padding-top:10px;color: darkgreen'><b><u>Statistics</b></u></td></tr>";
           html += "<tr><td><b>Max:</b></td><td>" + d3.max(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>Min:</b></td><td>" + d3.min(models).toFixed(precision) + ' ' + result.units + "</td></tr>";
           html += "<tr><td><b>Model Mean:</b></td><td>" + d3.mean(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>95th Perc. :</b></td><td>" + d3.quantile(models, 0.95).toFixed(precision) + ' ' + result.units + "</td></tr>";
@@ -174,7 +175,7 @@ qx.Class.define("modelspectrumjson.Plot",
           /**
           Climate Section
           */
-          if (me.getField() == "T" || me.getField() == "MaxT")
+          if (me.getShowClimate() && (me.getField() == "T" || me.getField() == "MaxT"))
           {
             html += "<hr><table>";
             html += "<tr><td style='padding-top:10px;color: rgb(142, 60, 18);'><b><u>Climate</b></u></td></tr>";
@@ -244,6 +245,8 @@ qx.Class.define("modelspectrumjson.Plot",
       */
       var keys = Object.keys(results.data);
       keys.sort();
+      var max = -9999;
+      var min = 9999;
 
       // Remove NWS and undefined values
       keys.forEach(function(obj, index)
@@ -258,16 +261,38 @@ qx.Class.define("modelspectrumjson.Plot",
 
         // Sort for percentiles
         results.data[obj] = results.data[obj].sort(d3.ascending);
+        if (d3.max(results.data[obj]) > max) {
+          max = d3.max(results.data[obj]);
+        }
+        if (d3.min(results.data[obj]) < min) {
+          min = d3.min(results.data[obj]);
+        }
       })
       var boxes = [];
+
+      // Now Line
+      boxes.push(
+      {
+        data : [[new Date().getTime(), -1000], [new Date().getTime(), 1000]],
+        color : "#eea6f7",
+        lines :
+        {
+          show : true,
+          lineWidth : 2
+        },
+        shadowSize : 1
+      });
 
       /**
       Check for Climate Data
       */
 
       // Climate [record low, avg min, avg max, record max, day of year,
-      if (typeof (results.climate) !== "undefined" && (me.getField() == "T" || me.getField() == "MaxT")) {
-        me.addClimateData(results, boxes);
+      if (me.getShowClimate() && (typeof (results.climate) !== "undefined" && (me.getField() == "T" || me.getField() == "MaxT")))
+      {
+        var minMax = me.addClimateData(results, boxes, min, max);
+        min = minMax[0];
+        max = minMax[1];
       }
 
       /**
@@ -295,12 +320,14 @@ qx.Class.define("modelspectrumjson.Plot",
           tickFormatter : function(val, axis) {
             return new moment(val).format("h A ddd<br>M/D/YY");
           },
-          axisLabel : "Date/Time (Local)"
+          axisLabel : "Date/Time (Local)",
+          min : new moment().subtract(1, 'days'),
+          max : new moment().add(9, 'days')
         },
         yaxis :
         {
-          min : (me.getField() == "RH" || me.getField() == "PoP") ? 0 : null,
-          max : (me.getField() == "RH" || me.getField() == "PoP") ? 100 : null,
+          min : (me.getField() == "RH" || me.getField() == "PoP") ? 0 : min - (min * 0.2),  //null,
+          max : (me.getField() == "RH" || me.getField() == "PoP") ? 100 : max + (max * 0.2),  //null,
           axisLabel : me.getField() + ', ' + results.units
         },
         zoom : {
@@ -318,11 +345,15 @@ qx.Class.define("modelspectrumjson.Plot",
     /**
     Add Climate Data
     */
-    addClimateData : function(results, boxes)
+    addClimateData : function(results, boxes, min, max)
     {
       var me = this;
       Object.keys(results.climate).forEach(function(obj)
       {
+        if (results.climate[obj][0] < min) {
+          min = results.climate[obj][0];
+        }
+
         // Record Lows
         boxes.push(
         {
@@ -354,6 +385,9 @@ qx.Class.define("modelspectrumjson.Plot",
         });
 
         // Record Highs
+        if (results.climate[obj][2] > max) {
+          max = results.climate[obj][0];
+        }
         boxes.push(
         {
           data : [[obj * 1000 + 1000 * 60 * moment().zone(), results.climate[obj][2], results.climate[obj][3]]],
@@ -368,6 +402,7 @@ qx.Class.define("modelspectrumjson.Plot",
           }
         });
       })
+      return [min, max];
     },
 
     /**
@@ -407,7 +442,7 @@ qx.Class.define("modelspectrumjson.Plot",
         // Main Box
         boxes.push(
         {
-          data : [[obj * 1000 - barWidth / 2, d3.quantile(results.data[obj], 0.25), d3.quantile(results.data[obj], 0.75)]],
+          data : [[obj * 1000, d3.quantile(results.data[obj], 0.25), d3.quantile(results.data[obj], 0.75)]],
           color : boxColor,
           bars :
           {
@@ -419,7 +454,7 @@ qx.Class.define("modelspectrumjson.Plot",
         // Fill in top of box
         boxes.push(
         {
-          data : [[obj * 1000 - barWidth / 2, d3.quantile(results.data[obj], 0.75), d3.quantile(results.data[obj], 0.75)]],
+          data : [[obj * 1000, d3.quantile(results.data[obj], 0.75), d3.quantile(results.data[obj], 0.75)]],
           color : boxColor,
           bars :
           {
@@ -431,7 +466,7 @@ qx.Class.define("modelspectrumjson.Plot",
         // Top Whisker
         boxes.push(
         {
-          data : [[obj * 1000 - barWidth / 2, d3.quantile(results.data[obj], 0.95), d3.quantile(results.data[obj], 0.95)]],
+          data : [[obj * 1000, d3.quantile(results.data[obj], 0.95), d3.quantile(results.data[obj], 0.95)]],
           color : boxColor,
           bars :
           {
@@ -443,7 +478,7 @@ qx.Class.define("modelspectrumjson.Plot",
         // Bottom Whisker
         boxes.push(
         {
-          data : [[obj * 1000 - barWidth / 2, d3.quantile(results.data[obj], 0.05), d3.quantile(results.data[obj], 0.05)]],
+          data : [[obj * 1000, d3.quantile(results.data[obj], 0.05), d3.quantile(results.data[obj], 0.05)]],
           color : boxColor,
           bars :
           {
@@ -455,7 +490,7 @@ qx.Class.define("modelspectrumjson.Plot",
         // Bottom Line
         boxes.push(
         {
-          data : [[obj * 1000, d3.quantile(results.data[obj], 0.05)], [obj * 1000, d3.quantile(results.data[obj], 0.25)]],
+          data : [[obj * 1000 + barWidth / 2, d3.quantile(results.data[obj], 0.05)], [obj * 1000 + barWidth / 2, d3.quantile(results.data[obj], 0.25)]],
           color : boxColor,
           lines : {
             show : true
@@ -465,12 +500,27 @@ qx.Class.define("modelspectrumjson.Plot",
         // Top Line
         boxes.push(
         {
-          data : [[obj * 1000, d3.quantile(results.data[obj], 0.95)], [obj * 1000, d3.quantile(results.data[obj], 0.75)]],
+          data : [[obj * 1000 + barWidth / 2, d3.quantile(results.data[obj], 0.95)], [obj * 1000 + barWidth / 2, d3.quantile(results.data[obj], 0.75)]],
           color : boxColor,
           lines : {
             show : true
           }
         });
+
+        // Freezing Line
+        if (me.getField() == "T" || me.getField() == "MaxT" || me.getField() == "MinT") {
+          boxes.push(
+          {
+            data : [[new moment().subtract(100, 'days'), 32], [new moment().add(100, 'days'), 32]],
+            color : "#1da9cc",
+            dashes :
+            {
+              show : true,
+              lineWidth : 1
+            },
+            shadowSize : 1
+          });
+        }
 
         // NWS Forecast
         boxes.push(
