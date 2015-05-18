@@ -58,11 +58,9 @@ qx.Class.define("modelspectrumjson.Application",
         modelspectrumjson.Plot.getInstance();
       });
       var showLines = new qx.ui.form.ToggleButton("Show Lines");
-      showLines.addListener("changeValue", function(e){
-           modelspectrumjson.Plot.getInstance().setShowLines(e.getData());
+      showLines.addListener("changeValue", function(e) {
+        modelspectrumjson.Plot.getInstance().setShowLines(e.getData());
       });
-
-
       container.add(html, {
         flex : 1
       });

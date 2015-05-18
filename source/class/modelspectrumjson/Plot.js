@@ -11,7 +11,6 @@ qx.Class.define("modelspectrumjson.Plot",
   {
     dataClone : {
       init : {
-
       }
     },
     wfo :
@@ -29,9 +28,10 @@ qx.Class.define("modelspectrumjson.Plot",
       init : "T",
       apply : "requestData"
     },
-    showLines:{
-    init: false,
-    apply:"onDataReceived"
+    showLines :
+    {
+      init : false,
+      apply : "onDataReceived"
     }
   },
   construct : function()
@@ -39,15 +39,20 @@ qx.Class.define("modelspectrumjson.Plot",
     this.base(arguments);
     var me = this;
 
-    if(wfo){
-    me.setWfo(wfo);
+    // On first load - do not make calls to request data for property changes
+    me.firstLoad = true;
+
+    // Set fields from url
+    if (wfo) {
+      me.setWfo(wfo);
     }
-    if(site){
-        me.setSite(site);
-        }
-        if(field){
-            me.setField(field);
-            }
+    if (site) {
+      me.setSite(site);
+    }
+    if (field) {
+      me.setField(field);
+    }
+    me.firstLoad = false;
 
     //  Request Data
     me.requestData();
@@ -58,11 +63,14 @@ qx.Class.define("modelspectrumjson.Plot",
   members :
   {
     /**
-            Request the data
-            */
+    Request the data
+    */
     requestData : function()
     {
       var me = this;
+      if (me.firstLoad) {
+        return;
+      }
       var req = new qx.io.request.Xhr("resource/modelspectrumjson/getData.php?wfo=" + me.getWfo() + '&site=' + me.getSite() + '&field=' + me.getField());
       req.setCache(false);
       req.setParser("json");
@@ -75,6 +83,10 @@ qx.Class.define("modelspectrumjson.Plot",
       // Send request
       req.send();
     },
+
+    /**
+    Tooltip to DOM and listeners
+    */
     addHooks : function()
     {
       var me = this;
@@ -90,7 +102,7 @@ qx.Class.define("modelspectrumjson.Plot",
         background : "rgb(255, 254, 210)",
         border : "3px solid rgb(136, 99, 0)",
         "border-radius" : "10px",
-        opacity : 0.96,
+        opacity : 0.98,
         "z-index" : 9999999
       }).appendTo("body");
 
@@ -114,8 +126,8 @@ qx.Class.define("modelspectrumjson.Plot",
 
           // Construct Tooltip html
           var html = '';
-          html += "<table><tr><td><b>From:</b> </td><td>" + new moment(x).add(addMinutes, 'minutes').format("h A ddd, MMM D, YYYY") + " </td></tr>";
-          html += "<tr><td><b>To:</b></td><td> " + new moment(x).add(result.gridLengthHours * 60 + addMinutes, 'minutes').format("h A ddd, MMM D, YYYY") + " </td></tr>";
+          html += "<table><tr><td><b>From:</b> </td><td>" + new moment(x).add(addMinutes, 'minutes').format("h A ddd, MMM D, YYYY ") + new moment.utc(x).add(addMinutes, 'minutes').format("(HH") + " UTC) </td></tr>";
+          html += "<tr><td><b>To:</b></td><td> " + new moment(x).add(result.gridLengthHours * 60 + addMinutes, 'minutes').format("h A ddd, MMM D, YYYY ") + new moment.utc(x).add(result.gridLengthHours * 60 + addMinutes, 'minutes').format("(HH") + " UTC) </td></tr>";
 
           // html += "<tr><td><b>Units:</b></td><td> "+result.units+"</td></tr>";
 
@@ -128,7 +140,7 @@ qx.Class.define("modelspectrumjson.Plot",
             precision = 2;
           }
           html += "<table>";
-          html += "<tr><td style='padding-top:10px;'><b><u>Forecasts</u></b></td></tr>";
+          html += "<tr><td style='padding-top:10px;color: purple;'><b><u>Forecasts</u></b></td></tr>";
 
           // Start at -1 to exclude NWS Forecast
           var numModels = -1;
@@ -151,7 +163,7 @@ qx.Class.define("modelspectrumjson.Plot",
           });
 
           //  debugger;
-          html += "<tr><td style='padding-top:10px;'><b><u>Statistics</b></u></td></tr>";
+          html += "<tr><td style='padding-top:10px;color: darkgreen'><b><u>Statistics</b></u></td></tr>";
           html += "<tr><td><b>Max:</b></td><td>" + d3.max(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>Min:</b></td><td>" + d3.min(models).toFixed(precision) + ' ' + result.units + "</td></tr>";
           html += "<tr><td><b>Model Mean:</b></td><td>" + d3.mean(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>95th Perc. :</b></td><td>" + d3.quantile(models, 0.95).toFixed(precision) + ' ' + result.units + "</td></tr>";
           html += "<tr><td><b>Model Median :</b></td><td>" + d3.median(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>75th Perc. :</b></td><td>" + d3.quantile(models, 0.75).toFixed(precision) + ' ' + result.units + "</td></tr>";
@@ -165,7 +177,7 @@ qx.Class.define("modelspectrumjson.Plot",
           if (me.getField() == "T" || me.getField() == "MaxT")
           {
             html += "<hr><table>";
-            html += "<tr><td style='padding-top:10px;'><b><u>Climate</b></u></td></tr>";
+            html += "<tr><td style='padding-top:10px;color: rgb(142, 60, 18);'><b><u>Climate</b></u></td></tr>";
 
             // Climate starts at midnight
             var climateTime = new moment.utc(x).startOf('day').toDate().getTime() / 1000;
@@ -194,14 +206,19 @@ qx.Class.define("modelspectrumjson.Plot",
         }
       });
     },
+
+    /**
+    Process and Plot the data
+    */
     onDataReceived : function(results)
     {
       var me = this;
-
-          if(results==true||results==false){
-          results =me.getDataClone();
-          }
-
+      if (results == true || results == false) {
+        results = me.getDataClone();
+      }
+      if (results.units == "F") {
+        results.units = "\xBAF";
+      };
       if (me.getField() == "Wind")
       {
         results.units = "mph";
@@ -250,58 +267,115 @@ qx.Class.define("modelspectrumjson.Plot",
 
       // Climate [record low, avg min, avg max, record max, day of year,
       if (typeof (results.climate) !== "undefined" && (me.getField() == "T" || me.getField() == "MaxT")) {
-        Object.keys(results.climate).forEach(function(obj)
-        {
-          // Record Lows
-          boxes.push(
-          {
-            data : [[obj * 1000 + 1000 * 60 * moment().zone(), results.climate[obj][0], results.climate[obj][1]]],
-            color : "blue",
-            hoverable : false,
-            bars :
-            {
-              show : true,
-              barWidth : 1000 * 3600 * 24,
-              lineWidth : 0.01,
-              fill : 0.18
-            }
-          });
-
-          // Normal
-          boxes.push(
-          {
-            data : [[obj * 1000 + 1000 * 60 * moment().zone(), results.climate[obj][1], results.climate[obj][2]]],
-            color : "green",
-            hoverable : false,
-            bars :
-            {
-              show : true,
-              barWidth : 1000 * 3600 * 24,
-              lineWidth : 0.01,
-              fill : 0.18
-            }
-          });
-
-          // Record Highs
-          boxes.push(
-          {
-            data : [[obj * 1000 + 1000 * 60 * moment().zone(), results.climate[obj][2], results.climate[obj][3]]],
-            color : "red",
-            hoverable : false,
-            bars :
-            {
-              show : true,
-              barWidth : 1000 * 3600 * 24,
-              lineWidth : 0.01,
-              fill : 0.18
-            }
-          });
-        })
+        me.addClimateData(results, boxes);
       }
 
       /**
       Plot the box and whiskers  - since flot doesn't allow coloring by value adding separate objects for each component.
       */
+      me.plotBoxAndWhiskers(keys, results, resultsClone, boxes);
+
+      // Add lines
+      if (me.getShowLines()) {
+        me.plotLines(resultsClone, boxes);
+      }
+
+      /**
+       Make the flot plot call
+      */
+      $.plot("#placeholder", boxes,
+      {
+        axisLabels : {
+          show : true
+        },
+        xaxis :
+        {
+          mode : "time",
+          timezone : "browser",
+          tickFormatter : function(val, axis) {
+            return new moment(val).format("h A ddd<br>M/D/YY");
+          },
+          axisLabel : "Date/Time (Local)"
+        },
+        yaxis :
+        {
+          min : (me.getField() == "RH" || me.getField() == "PoP") ? 0 : null,
+          max : (me.getField() == "RH" || me.getField() == "PoP") ? 100 : null,
+          axisLabel : me.getField() + ', ' + results.units
+        },
+        zoom : {
+          interactive : true
+        },
+        pan : {
+          interactive : true
+        },
+        grid : {
+          hoverable : true
+        }
+      });
+    },
+
+    /**
+    Add Climate Data
+    */
+    addClimateData : function(results, boxes)
+    {
+      var me = this;
+      Object.keys(results.climate).forEach(function(obj)
+      {
+        // Record Lows
+        boxes.push(
+        {
+          data : [[obj * 1000 + 1000 * 60 * moment().zone(), results.climate[obj][0], results.climate[obj][1]]],
+          color : "blue",
+          hoverable : false,
+          bars :
+          {
+            show : true,
+            barWidth : 1000 * 3600 * 24,
+            lineWidth : 0.01,
+            fill : 0.18
+          }
+        });
+
+        // Normal
+        boxes.push(
+        {
+          data : [[obj * 1000 + 1000 * 60 * moment().zone(), results.climate[obj][1], results.climate[obj][2]]],
+          color : "green",
+          hoverable : false,
+          bars :
+          {
+            show : true,
+            barWidth : 1000 * 3600 * 24,
+            lineWidth : 0.01,
+            fill : 0.18
+          }
+        });
+
+        // Record Highs
+        boxes.push(
+        {
+          data : [[obj * 1000 + 1000 * 60 * moment().zone(), results.climate[obj][2], results.climate[obj][3]]],
+          color : "red",
+          hoverable : false,
+          bars :
+          {
+            show : true,
+            barWidth : 1000 * 3600 * 24,
+            lineWidth : 0.01,
+            fill : 0.18
+          }
+        });
+      })
+    },
+
+    /**
+    Plot the box and whiskers
+    */
+    plotBoxAndWhiskers : function(keys, results, resultsClone, boxes)
+    {
+      var me = this;
       var barWidth = 1000 * 3600 * results.gridLengthHours;
       keys.forEach(function(obj)
       {
@@ -408,75 +482,33 @@ qx.Class.define("modelspectrumjson.Plot",
           }
         });
       })
+    },
 
-
-      if(me.getShowLines()){
+    /**
+    Plot Individual Models
+    */
+    plotLines : function(resultsClone, boxes)
+    {
+      var me = this;
       resultsClone.models.forEach(function(obj, modelIndex)
       {
         var timeseries = [];
         Object.keys(resultsClone.data).forEach(function(obj, index) {
           timeseries.push([obj * 1000, resultsClone.data[obj][modelIndex]]);
         })
-        if (obj == "Official") {
-          boxes.push(
-          {
-            label : obj,
-            data : timeseries,
-            color : "blue",
-            points : {
-              show : true
-            },
-            lines : {
-              show : true
-            }
-          });
-        } else {
-          boxes.push(
-          {
-            label : obj,
-            data : timeseries,
-
-            //color : "blue",
-            points : {
-              show : true
-            },
-            lines : {
-              show : true
-            }
-          });
-        }
-      })
-      }
-      $.plot("#placeholder", boxes,
-      {
-        axisLabels : {
-          show : true
-        },
-        xaxis :
+        boxes.push(
         {
-          mode : "time",
-          timezone : "browser",
-          tickFormatter : function(val, axis) {
-            return new moment(val).format("h A ddd<br>M/D/YY");
+          label : obj,
+          data : timeseries,
+          color : (obj == "Official") ? "blue" : null,
+          points : {
+            show : true
           },
-          axisLabel : "Date/Time (Local)"
-        },
-        yaxis :
-        {
-          min : (me.getField() == "RH" || me.getField() == "PoP") ? 0 : null,
-          max : (me.getField() == "RH" || me.getField() == "PoP") ? 100 : null,
-          axisLabel : me.getField() + ', ' + results.units
-        },
-        zoom : {
-          interactive : true
-        },
-        pan : {
-          interactive : true
-        },
-        grid : {
-          hoverable : true
-        }
-      });
+          lines : {
+            show : true
+          }
+        });
+      })
     }
   }
 });
