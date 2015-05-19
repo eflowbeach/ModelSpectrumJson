@@ -70,20 +70,24 @@ qx.Class.define("modelspectrumjson.Application",
       var groupBox = new qx.ui.groupbox.GroupBox("Controls").set( {
         maxWidth : 800
       });
-      groupBox.setLayout(new qx.ui.layout.HBox(10).set({alignY:"middle"}));
+      groupBox.setLayout(new qx.ui.layout.HBox(10).set( {
+        alignY : "middle"
+      }));
       container.add(groupBox);
 
       /**
                 * Fields SelectBox
                 */
-            var fields = ["MaxT", "MinT", "T", "PoP"];
-            var fieldSelectBox = new qx.ui.form.SelectBox();
-            new qx.data.controller.List(new qx.data.Array(fields), fieldSelectBox);
-            fieldSelectBox.addListener("changeSelection", function(e){
-             modelspectrumjson.Plot.getInstance().setField(e.getData()[0].getLabel());
-            })
-            groupBox.add(new qx.ui.basic.Label("<b>Field: </b>").set({rich:true}));
-               groupBox.add(fieldSelectBox);
+      var fields = ["MaxT", "MinT", "T", "PoP"];
+      var fieldSelectBox = new qx.ui.form.SelectBox();
+      new qx.data.controller.List(new qx.data.Array(fields), fieldSelectBox);
+      fieldSelectBox.addListener("changeSelection", function(e) {
+        modelspectrumjson.Plot.getInstance().setField(e.getData()[0].getLabel());
+      })
+      groupBox.add(new qx.ui.basic.Label("<b>Field: </b>").set( {
+        rich : true
+      }));
+      groupBox.add(fieldSelectBox);
 
       // Show Individual Models
       var showLines = new qx.ui.form.ToggleButton("Show Lines");
@@ -100,9 +104,24 @@ qx.Class.define("modelspectrumjson.Application",
       });
       groupBox.add(showClimate);
 
+      // Plot type
+      groupBox.add(new qx.ui.basic.Label("<b>Plot Type: </b>").set( {
+        rich : true
+      }));
+      var rbBW = new qx.ui.form.RadioButton("Box and Whisker");
+      var rbPlume = new qx.ui.form.RadioButton("Plume");
 
+      // Add them to the container
+      groupBox.add(rbBW);
+      groupBox.add(rbPlume);
 
+      // Add all radio buttons to the manager
+      var manager = new qx.ui.form.RadioGroup(rbBW, rbPlume);
 
+      // Add a listener to the "changeSelected" event
+      manager.addListener("changeSelection", function(e) {
+        modelspectrumjson.Plot.getInstance().setPlotType(e.getData()[0].getLabel());
+      }, this);
 
       // Add button to document at fixed coordinates
       this.getRoot().add(container, {

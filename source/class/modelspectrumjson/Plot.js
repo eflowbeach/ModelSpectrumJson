@@ -38,6 +38,11 @@ qx.Class.define("modelspectrumjson.Plot",
     {
       init : true,
       apply : "onDataReceived"
+    },
+    plotType :
+    {
+      init : "Box and Whisker",
+      apply : "onDataReceived"
     }
   },
   construct : function()
@@ -214,7 +219,7 @@ qx.Class.define("modelspectrumjson.Plot",
     onDataReceived : function(results)
     {
       var me = this;
-      if (results == true || results == false) {
+      if (results == true || results == false || results == "Box and Whisker" || results == "Plume") {
         results = me.getDataClone();
       }
       if (results.units == "F") {
@@ -298,7 +303,11 @@ qx.Class.define("modelspectrumjson.Plot",
       /**
       Plot the box and whiskers  - since flot doesn't allow coloring by value adding separate objects for each component.
       */
-      me.plotBoxAndWhiskers(keys, results, resultsClone, boxes);
+      if (me.getPlotType() == "Box and Whisker") {
+        me.plotBoxAndWhiskers(keys, results, resultsClone, boxes);
+      } else {
+        me.plotPlume(keys, results, resultsClone, boxes);
+      }
 
       // Add lines
       if (me.getShowLines()) {
@@ -522,6 +531,127 @@ qx.Class.define("modelspectrumjson.Plot",
           });
         }
 
+        // NWS Forecast
+        boxes.push(
+        {
+          data : [[obj * 1000, resultsClone.data[obj][0]]],
+          color : "blue",
+          points : {
+            show : true
+          }
+        });
+      })
+    },
+
+    /**
+      Plot the box and whiskers
+      */
+    plotPlume : function(keys, results, resultsClone, boxes)
+    {
+      var me = this;
+      var pctlObject = {
+
+      };
+      pctlObject["mean"] = [];
+      pctlObject["5%"] = [];
+      pctlObject["25%"] = [];
+      pctlObject["50%"] = [];
+      pctlObject["75%"] = [];
+      pctlObject["95%"] = [];
+      keys.forEach(function(obj)
+      {
+        pctlObject["mean"].push([obj * 1000, d3.mean(results.data[obj])]);
+        pctlObject["5%"].push([obj * 1000, d3.quantile(results.data[obj], 0.05)]);
+        pctlObject["25%"].push([obj * 1000, d3.quantile(results.data[obj], 0.25)]);
+        pctlObject["50%"].push([obj * 1000, d3.quantile(results.data[obj], 0.5)]);
+        pctlObject["75%"].push([obj * 1000, d3.quantile(results.data[obj], 0.75)]);
+        pctlObject["95%"].push([obj * 1000, d3.quantile(results.data[obj], 0.95)]);
+      });
+      boxes.push(
+      {
+        id : "f5%",
+        data : pctlObject["5%"],
+        lines :
+        {
+          show : true,
+          lineWidth : 0,
+          fill : false
+        },
+        color : "rgb(255,50,50)"
+      },
+      {
+        id : "f25%",
+        data : pctlObject["25%"],
+        lines :
+        {
+          show : true,
+          lineWidth : 0,
+          fill : 0.2
+        },
+        color : "rgb(255,50,50)",
+        fillBetween : "f5%"
+      },
+      {
+        id : "f50%",
+        data : pctlObject["50%"],
+        lines :
+        {
+          show : true,
+          lineWidth : 0.5,
+          fill : 0.4,
+          shadowSize : 0
+        },
+        color : "rgb(255,50,50)",
+        fillBetween : "f25%"
+      },
+      {
+        id : "f75%",
+        data : pctlObject["75%"],
+        lines :
+        {
+          show : true,
+          lineWidth : 0,
+          fill : 0.4
+        },
+        color : "rgb(255,50,50)",
+        fillBetween : "f50%"
+      },
+      {
+        id : "f95%",
+        data : pctlObject["95%"],
+        lines :
+        {
+          show : true,
+          lineWidth : 0,
+          fill : 0.2
+        },
+        color : "rgb(255,50,50)",
+        fillBetween : "f75%"
+      },
+      {
+        label : "Mean",
+        data : pctlObject["mean"],
+        lines : {
+          show : true
+        },
+        color : "rgb(255,50,50)"
+      })
+
+      // Freezing Line
+      if (me.getField() == "T" || me.getField() == "MaxT" || me.getField() == "MinT") {
+        boxes.push(
+        {
+          data : [[new moment().subtract(100, 'days'), 32], [new moment().add(100, 'days'), 32]],
+          color : "#1da9cc",
+          dashes :
+          {
+            show : true,
+            lineWidth : 1
+          },
+          shadowSize : 1
+        });
+      }
+      keys.forEach(function(obj) {
         // NWS Forecast
         boxes.push(
         {
