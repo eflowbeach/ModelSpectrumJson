@@ -54,13 +54,13 @@ qx.Class.define("modelspectrumjson.Plot",
     me.firstLoad = true;
 
     // Set fields from url
-    if (wfo) {
+    if (typeof wfo !=="undefined") {
       me.setWfo(wfo);
     }
-    if (site) {
+    if (typeof site!=="undefined") {
       me.setSite(site);
     }
-    if (field) {
+    if (typeof field!=="undefined") {
       me.setField(field);
     }
     me.firstLoad = false;
@@ -149,6 +149,7 @@ qx.Class.define("modelspectrumjson.Plot",
           }
           html += "<table>";
           html += "<tr><td style='padding-top:10px;color: purple;'><b><u>Forecasts</u></b></td></tr>";
+          html += "<tr><td><b><u>Model</u></b></td><td><b><u>Value</u></b></td><td style='padding-left:20px;'><b><u>Run Time</u></b></td></tr>";
 
           // Start at -1 to exclude NWS Forecast
           var numModels = -1;
@@ -156,13 +157,15 @@ qx.Class.define("modelspectrumjson.Plot",
             if (obj !== null)
             {
               if (result.models[index] == item.series.label) {
-                html += "<tr><td><b><font style='color:" + item.series.color + ";'>" + result.models[index].replace("Official", "NWS Forecast") + "</font>:</b></td><td>" + obj.toFixed(precision) + ' ' + result.units + "</td></tr>";
+                html += "<tr><td><b><font style='color:" + item.series.color + ";'>" + result.models[index].replace("Official", "NWS Forecast") + "</font>:</b></td><td>" + obj.toFixed(precision) + ' ' + result.units +"</td><td style='padding-left:20px;'> "+result.modelRunTimes[index]+ "</td></tr>";
               } else {
-                html += "<tr><td><b>" + result.models[index].replace("Official", "NWS Forecast") + ":</b></td><td>" + obj.toFixed(precision) + ' ' + result.units + "</td></tr>";
+                html += "<tr><td><b>" + result.models[index].replace("Official", "NWS Forecast") + ":</b></td><td>" + obj.toFixed(precision) + ' ' + result.units +"</td><td style='padding-left:20px;'> "+result.modelRunTimes[index]+ "</td></tr>";
               }
               numModels++;
             }
           });
+
+          html += '</table><hr><table>';
           var models = result.data[match].slice(1).sort(d3.ascending);
 
           // Remove undefined
@@ -170,17 +173,18 @@ qx.Class.define("modelspectrumjson.Plot",
             return n != undefined
           });
           html += "<tr><td style='padding-top:10px;color: darkgreen'><b><u>Statistics</b></u></td></tr>";
-          html += "<tr><td><b>Max:</b></td><td>" + d3.max(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>Min:</b></td><td>" + d3.min(models).toFixed(precision) + ' ' + result.units + "</td></tr>";
-          html += "<tr><td><b>Model Mean:</b></td><td>" + d3.mean(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>95th Perc. :</b></td><td>" + d3.quantile(models, 0.95).toFixed(precision) + ' ' + result.units + "</td></tr>";
-          html += "<tr><td><b>Model Median :</b></td><td>" + d3.median(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>75th Perc. :</b></td><td>" + d3.quantile(models, 0.75).toFixed(precision) + ' ' + result.units + "</td></tr>";
-          html += "<tr><td><b>Model Std. Dev. :</b></td><td>" + d3.deviation(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>25th Perc. :</b></td><td>" + d3.quantile(models, 0.25).toFixed(precision) + ' ' + result.units + "</td></tr>";
-          html += "<tr><td><b>Number of Models :</b></td><td>" + numModels + "</td><td style='padding-left:5px;'><b>5th Perc. :</b></td><td>" + d3.quantile(models, 0.05).toFixed(precision) + ' ' + result.units + "</td></tr>";
+          html += "<tr><td><b>Max:</b></td><td>" + d3.max(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>95th Perc. :</b></td><td>" + d3.quantile(models, 0.95).toFixed(precision) + ' ' + result.units + "</td></tr>";
+          html += "<tr><td><b>Min:</b></td><td>" + d3.min(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>75th Perc. :</b></td><td>" + d3.quantile(models, 0.75).toFixed(precision) + ' ' + result.units + "</td></tr>";
+          html += "<tr><td><b>Model Mean:</b></td><td>" + d3.mean(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>50th Perc. :</b></td><td>" + d3.quantile(models, 0.50).toFixed(precision) + ' ' + result.units + "</td></tr>";
+          html += "<tr><td><b>Model Median :</b></td><td>" + d3.median(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>25th Perc. :</b></td><td>" + d3.quantile(models, 0.25).toFixed(precision) + ' ' + result.units + "</td></tr>";
+          html += "<tr><td><b>Model Std. Dev. :</b></td><td>" + d3.deviation(models).toFixed(precision) + ' ' + result.units + "</td><td style='padding-left:5px;'><b>5th Perc. :</b></td><td>" + d3.quantile(models, 0.05).toFixed(precision) + ' ' + result.units + "</td></tr>";
+          html += "<tr><td><b>Number of Models :</b></td><td>" + numModels + "</td>";
           html += "</table>";
 
           /**
           Climate Section
           */
-          if (me.getShowClimate() && (me.getField() == "T" || me.getField() == "MaxT"))
+          if (me.getShowClimate() && (me.getField() == "T" || me.getField() == "MaxT" ||me.getField() == "MinT" ))
           {
             html += "<hr><table>";
             html += "<tr><td style='padding-top:10px;color: rgb(142, 60, 18);'><b><u>Climate</b></u></td></tr>";
@@ -279,11 +283,11 @@ qx.Class.define("modelspectrumjson.Plot",
       boxes.push(
       {
         data : [[new Date().getTime(), -1000], [new Date().getTime(), 1000]],
-        color : "#eea6f7",
+        color : "black",
         lines :
         {
           show : true,
-          lineWidth : 2
+          lineWidth : 3
         },
         shadowSize : 1
       });
@@ -293,7 +297,7 @@ qx.Class.define("modelspectrumjson.Plot",
       */
 
       // Climate [record low, avg min, avg max, record max, day of year,
-      if (me.getShowClimate() && (typeof (results.climate) !== "undefined" && (me.getField() == "T" || me.getField() == "MaxT")))
+      if (me.getShowClimate() && (typeof (results.climate) !== "undefined" && (me.getField() == "T" || me.getField() == "MaxT"||me.getField() == "MinT" )))
       {
         var minMax = me.addClimateData(results, boxes, min, max);
         min = minMax[0];
@@ -330,12 +334,12 @@ qx.Class.define("modelspectrumjson.Plot",
             return new moment(val).format("h A ddd<br>M/D/YY");
           },
           axisLabel : "Date/Time (Local)",
-          min : new moment().subtract(1, 'days'),
-          max : new moment().add(9, 'days')
+          min : new moment().startOf('day'),//.subtract(1, 'days'),
+          max : new moment().startOf('day').add(8, 'days')
         },
         yaxis :
         {
-          min : (me.getField() == "RH" || me.getField() == "PoP") ? 0 : min - (min * 0.2),  //null,
+          min : (me.getField() == "RH" || me.getField() == "PoP"|| me.getField() == "WaveHeight") ? 0 : min - (min * 0.2),  //null,
           max : (me.getField() == "RH" || me.getField() == "PoP") ? 100 : max + (max * 0.2),  //null,
           axisLabel : me.getField() + ', ' + results.units
         },
@@ -395,7 +399,7 @@ qx.Class.define("modelspectrumjson.Plot",
 
         // Record Highs
         if (results.climate[obj][2] > max) {
-          max = results.climate[obj][0];
+          max = results.climate[obj][2];
         }
         boxes.push(
         {
@@ -567,6 +571,19 @@ qx.Class.define("modelspectrumjson.Plot",
         pctlObject["75%"].push([obj * 1000, d3.quantile(results.data[obj], 0.75)]);
         pctlObject["95%"].push([obj * 1000, d3.quantile(results.data[obj], 0.95)]);
       });
+
+//"MaxT", "MinT", "T", "PoP", "Wind", "WindGust", "QPF", "RH"
+      var color =   "rgb(255,50,50)";
+      if(me.getField()=="PoP"|me.getField()=="QPF"){
+color =   "#4c9645";
+      }else if (me.getField()=="Wind"||me.getField()=="WindGust"){
+            color =   "#a62fc4 ";
+      }else if (me.getField()=="RH"){
+                   color =   "#a16f23 ";
+             }else if (me.getField()=="WaveHeight"){
+                          color =   "#7bb3d4 ";
+                    }
+
       boxes.push(
       {
         id : "f5%",
@@ -577,7 +594,7 @@ qx.Class.define("modelspectrumjson.Plot",
           lineWidth : 0,
           fill : false
         },
-        color : "rgb(255,50,50)"
+        color : color
       },
       {
         id : "f25%",
@@ -588,7 +605,7 @@ qx.Class.define("modelspectrumjson.Plot",
           lineWidth : 0,
           fill : 0.2
         },
-        color : "rgb(255,50,50)",
+        color : color,
         fillBetween : "f5%"
       },
       {
@@ -601,7 +618,7 @@ qx.Class.define("modelspectrumjson.Plot",
           fill : 0.4,
           shadowSize : 0
         },
-        color : "rgb(255,50,50)",
+        color : color,
         fillBetween : "f25%"
       },
       {
@@ -613,7 +630,7 @@ qx.Class.define("modelspectrumjson.Plot",
           lineWidth : 0,
           fill : 0.4
         },
-        color : "rgb(255,50,50)",
+        color : color,
         fillBetween : "f50%"
       },
       {
@@ -625,7 +642,7 @@ qx.Class.define("modelspectrumjson.Plot",
           lineWidth : 0,
           fill : 0.2
         },
-        color : "rgb(255,50,50)",
+        color : color,
         fillBetween : "f75%"
       },
       {
@@ -634,7 +651,7 @@ qx.Class.define("modelspectrumjson.Plot",
         lines : {
           show : true
         },
-        color : "rgb(255,50,50)"
+        color : color
       })
 
       // Freezing Line

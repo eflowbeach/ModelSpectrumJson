@@ -78,7 +78,7 @@ qx.Class.define("modelspectrumjson.Application",
       /**
                 * Fields SelectBox
                 */
-      var fields = ["MaxT", "MinT", "T", "PoP"];
+      var fields = ["MaxT", "MinT", "T", "PoP", "Wind", "WindGust", "QPF", "RH"];
       var fieldSelectBox = new qx.ui.form.SelectBox();
       new qx.data.controller.List(new qx.data.Array(fields), fieldSelectBox);
       fieldSelectBox.addListener("changeSelection", function(e) {
