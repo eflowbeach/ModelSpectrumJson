@@ -13,7 +13,7 @@ allSites = ['abr', 'aly', 'abq', 'ama', 'afc', 'anc', 'ffc', 'ewx', 'byz', 'bgm'
             'riw', 'sto', 'slc', 'sjt', 'sgx', 'mtr', 'sju', 'sew', 'shv', 'fsd', 'otx', 'sgf', 'lsx', 'ctp', 'lwx',
             'tae', 'tbw', 'top', 'twc', 'tsa', 'mpx', 'akq', 'ict', 'ilm', 'iln']
 
-allSites = ['rlx', 'btv', 'oax']
+allSites = ['car','mso','bis','btv','riw','mqt','abq','lox','rlx','fsd','ctp','mpx','pqr','jkl']
 
 # Use https://github.com/mapbox/geojson-merge to merge files by constructing merge string
 mergeCommand = 'geojson-merge '
