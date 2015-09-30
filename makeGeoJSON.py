@@ -13,7 +13,10 @@ allSites = ['abr', 'aly', 'abq', 'ama', 'afc', 'anc', 'ffc', 'ewx', 'byz', 'bgm'
             'riw', 'sto', 'slc', 'sjt', 'sgx', 'mtr', 'sju', 'sew', 'shv', 'fsd', 'otx', 'sgf', 'lsx', 'ctp', 'lwx',
             'tae', 'tbw', 'top', 'twc', 'tsa', 'mpx', 'akq', 'ict', 'ilm', 'iln']
 
-allSites = ['car','mso','bis','btv','riw','mqt','abq','lox','rlx','fsd','ctp','mpx','pqr','jkl']
+allSites = ['car','mso','bis','btv','riw','mqt','abq','lox','rlx',
+'fsd','ctp','mpx','pqr','jkl','tfx','byz', 'ggw', 'gld','mfr','mtr',
+'rev','lkn','bro','oax','otx','psr', 'twc']
+
 
 # Use https://github.com/mapbox/geojson-merge to merge files by constructing merge string
 mergeCommand = 'geojson-merge '
@@ -38,9 +41,10 @@ for i in f.readlines():
 f.close()
 
 # Make final minified output file
-output = 'ModelSpectrumSites.min.json'
+output = '../Web/ModelSpectrumSites.min.json'
 f = open(output, 'w')
 f.write(minify_json.json_minify(geostring))
 f.close()
 
 print "Final output stored here: "+ output
+print "Run script from ldad and it should grab this file from koding."
